@@ -1,0 +1,8 @@
+./controllers
+  Tratamento de requisições
+./routes
+  Roteamento de requisições e respostas
+./entities
+  Classes do domínio do problema
+./types
+  Data Transfering Objects

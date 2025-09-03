@@ -1,0 +1,26 @@
+{
+  "name": "lpla-tarefas-b",
+  "version": "0.0.1",
+  "description": "\"servidor backend de tarefas\"",
+  "keywords": [
+    "tarefas"
+  ],
+  "license": "ISC",
+  "author": "LPLA-br",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "build": "cd ./src/ && ./node_modules/typescript/bin/tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "express": "^5.1.0",
+    "typeorm": "^0.3.26",
+    "typescript": "^5.9.2"
+  },
+  "devDependencies": {
+    "jest": "^30.1.3"
+  }
+}
