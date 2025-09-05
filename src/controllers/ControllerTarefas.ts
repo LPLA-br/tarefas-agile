@@ -33,7 +33,7 @@ export class ControllerTarefas
         corpo: tarefa.corpo
       });
 
-      await this.armazenarTarefa( instancia );
+      await this.salvarNovaTarefaArmazenamento( instancia );
     }
     catch (err)
     {
@@ -47,7 +47,7 @@ export class ControllerTarefas
     {
       if ( typeof tarefa.titulo === "string" && typeof tarefa.corpo === "string" )
       {
-        await this.alterarTituloEOuCorpoTarefa( identificador, tarefa.titulo, tarefa.corpo );
+        await this.alterarTituloEOuCorpoTarefaArmazenamento( identificador, tarefa.titulo, tarefa.corpo );
       }
       throw new Error( `modificarTarefa → titulo, corpo inválidos.` );
     }
@@ -117,52 +117,83 @@ export class ControllerTarefas
     }
   }
 
-  public async obterTarefa( identificador: number ): Promise<Tarefa | null>
-  {
-    return this.tarefaRepo
-    .createQueryBuilder()
-    .select("tarefa")
-    .from(Tarefa, "tarefa")
-    .where("tarefa.identificador = :identificador", {identificador: identificador})
-    .getOne();
-  }
-
-  public async obterTodasTarefas(): Promise<Tarefa[] | Tarefa | null>
-  {
-    return this.tarefaRepo
-    .createQueryBuilder()
-    .select("tarefa")
-    .from(Tarefa, "tarefa")
-    .getMany();
-  }
-
-  // Warning: Possible Single Reponsibility Issue
-
-  private async armazenarTarefa( instancia: Tarefa ): Promise<void>
+  public async obterCampoEspecificoUmaTarefa( identificador: number, campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
   {
     try
     {
-      await this.tarefaRepo
-      .createQueryBuilder()
-      .insert()
-      .into(Tarefa)
-      .values(instancia)
-      .execute();
+      return await this.obterCampoEspecificoDumaTarefaArmazenamento( identificador, campo );
     }
     catch ( err )
     {
       console.error( `${this.constructor.name}: ${err}` );
+      return null;
     }
   }
 
-  private async alterarPrioridadeArmazenamento( identificador: number, estado: boolean ): Promise<void>
+  public async obterTarefa( identificador: number ): Promise<Tarefa | null>
+  {
+    try
+    {
+      return await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+    }
+    catch ( err )
+    {
+      console.error( `${this.constructor.name}: ${err}` );
+      return null;
+    }
+  }
+
+  public async obterTodasTarefas(): Promise<Tarefa[] | Tarefa | null>
+  {
+    try
+    {
+      return await this.obterTodasTarefas();
+    }
+    catch ( err )
+    {
+      console.error( `${this.constructor.name}: ${err}` );
+      return null;
+    }
+    
+  }
+
+  // ----------------------------------------------------------------------
+  // Warning: Possible Single Reponsibility Issue
+  // Warning: Possible Anemic Classes With Unrestricted Data Manipulation
+
+  private async salvarNovaTarefaArmazenamento( instancia: Tarefa ): Promise<void>
   {
     await this.tarefaRepo
     .createQueryBuilder()
-    .update(Tarefa)
-    .set({prioritario: estado})
-    .where("identificador = :identificador", {identificador: identificador})
+    .insert()
+    .into(Tarefa)
+    .values(instancia)
     .execute();
+  }
+
+  // Alterar para estado informado.
+  private async alterarPrioridadeArmazenamento( identificador: number, estado: boolean ): Promise<void>
+  {
+    const tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+
+    if ( tarefa === null )
+    {
+      throw new Error("obtenção de todos os dados de uma tarefa falhou.");
+    }
+
+    if ( tarefa?.prioritario === estado )
+    {
+      return;
+    }
+
+    if ( estado )
+    {
+      tarefa?.desdefinirPrioritario();
+      this.tarefaRepo.save( tarefa, {reload:false});
+      return;
+    }
+    tarefa?.definirPrioritario();
+    this.tarefaRepo.save( tarefa, {reload:false});
   }
 
   private async alterarConclusaoArmazenamento( identificador: number, estado: boolean ): Promise<void>
@@ -175,7 +206,7 @@ export class ControllerTarefas
     .execute();
   }
 
-  private async alterarTituloEOuCorpoTarefa( identificador: number, titulo: string, corpo: string ): Promise<void>
+  private async alterarTituloEOuCorpoTarefaArmazenamento( identificador: number, titulo: string, corpo: string ): Promise<void>
   {
     await this.tarefaRepo
     .createQueryBuilder()
@@ -193,6 +224,35 @@ export class ControllerTarefas
     .from(Tarefa)
     .where("identificador = :identificador", { identificador: identificador })
     .execute();
+  }
+
+  private async obterTodosDadosDumaTarefaArmazenamento( identificador: number ): Promise< Tarefa | null>
+  {
+    return await this.tarefaRepo
+    .createQueryBuilder()
+    .select("*")
+    .from(Tarefa, "tarefa")
+    .where("tarefa.identificador = :identificador", {identificador: identificador})
+    .getOne();
+  }
+
+  private async obterCampoEspecificoDumaTarefaArmazenamento( identificador: number, campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
+  {
+    return await this.tarefaRepo
+    .createQueryBuilder()
+    .select( campo )
+    .from(Tarefa, "tarefa")
+    .where("tarefa.identificador = :identificador", {identificador: identificador})
+    .getOne();
+  }
+
+  private async obterTodosDadosTodasTarefasArmazenamento(): Promise<Tarefa[] | Tarefa | null>
+  {
+    return this.tarefaRepo
+    .createQueryBuilder()
+    .select("*")
+    .from(Tarefa, "tarefa")
+    .getMany();
   }
 
 }
