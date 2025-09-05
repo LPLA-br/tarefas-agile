@@ -4,9 +4,9 @@
 
 import process from "node:process";
 
-import TratadorConfiguracoes from "./utilities/TratadorConfiguracoes";
+import TratadorConfiguracoes from "./utilities/TratadorConfiguracoes.js";
 
-import { app } from "./expressSettings";
+import { app } from "./expressSettings.js";
 
 process.on( 'SIGINT', () =>
 {

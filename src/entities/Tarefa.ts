@@ -1,25 +1,44 @@
+/* DESCRIÇÃO: Entidade em modelo não anêmico para representação informacional de Tarefas.
+ * NOTA: Limitações da transpilação do typescript mais
+ * typeorm impedem definição private para atributos
+ * encapsulados. Acesso direto aos atributos é
+ * desencorajado e repudiado.
+ * */
+import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
 
 import type { TypeTarefa } from "../types/TypeTarefa.js";
 
-export default class Tarefa
+@Entity("tarefas")
+export class Tarefa
 {
-  private identificador: number;
 
-  private timestampCriacao: string;
-  private timestampUltimaModificacao: string;
+  @PrimaryGeneratedColumn()
+  public identificador: number;
 
-  private prioritario: boolean;
-  private concluido: boolean;
+  @Column({type: "varchar", length: 13})
+  public timestampCriacao: string;
 
-  private titulo: string;
-  private corpo: string;
+  @Column({type: "varchar", length: 13})
+  public timestampUltimaModificacao: string;
+
+  @Column({type: "boolean"})
+  public prioritario: boolean;
+
+  @Column({type: "boolean"})
+  public concluido: boolean;
+
+  @Column({type: "varchar", length: 128})
+  public titulo: string;
+
+  @Column({type: "varchar", length: 2048})
+  public corpo: string;
 
   constructor( tarefa: TypeTarefa )
   {
     this.identificador = tarefa.identificador ;
 
-    this.timestampCriacao = tarefa.timestampCriacao === undefined ? new Date().getTime().toString() : tarefa.timestampCriacao ;
-    this.timestampUltimaModificacao = tarefa.timestampUltimaModificacao === undefined ? new Date().getTime().toString() : tarefa.timestampUltimaModificacao ;
+    this.timestampCriacao = ( tarefa.timestampCriacao !== undefined ) ? tarefa.timestampCriacao : this.gerarTimestampDeCriacao();
+    this.timestampUltimaModificacao = ( tarefa.timestampUltimaModificacao !== undefined ) ? tarefa.timestampUltimaModificacao : this.atualizarTimestampDeModificacao();
 
     this.prioritario = tarefa.prioritario;
     this.concluido = tarefa.concluido;
@@ -74,7 +93,7 @@ export default class Tarefa
     this.concluido = false;
   }
 
-  //AÇÕES NUCLEARES
+  //MÉTODOS NUCLEARES
 
   public definirTitulo( titulo: string ): void
   {
@@ -94,9 +113,14 @@ export default class Tarefa
 
   //COMPORTAMENTOS ENCAPSULADOS
 
-  private atualizarTimestampDeModificacao(): void
+  private gerarTimestampDeCriacao(): string
   {
-    this.timestampUltimaModificacao = new Date().getTime().toString();
+    return new Date().getTime().toString();
+  }
+
+  private atualizarTimestampDeModificacao(): string
+  {
+    return new Date().getTime().toString();
   }
 
   private validarAcaoModificativaSobreTarefaConcluida(): void

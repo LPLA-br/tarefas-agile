@@ -3,7 +3,7 @@
  * */
 import * as fs from 'fs';
 
-import { ConfigFile } from "../types/ConfigFile";
+import type { ConfigFile } from '../types/ConfigFile.js';
 
 export default class TratadorConfiguracoes
 {
@@ -35,7 +35,7 @@ export default class TratadorConfiguracoes
 
   public obterEstadoDeLOGDatabaseLocal(): boolean
   {
-    return this.configParams.databseLOG;
+    return this.configParams.databaseLOG;
   }
 
 }

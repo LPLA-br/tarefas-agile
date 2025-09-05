@@ -40,5 +40,9 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
+
+    // Emissões extra do typescript:
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true
   }
 }

@@ -1,5 +1,4 @@
-/* AUTOR: LPLA-br
- * RESPONSABILIDADE: Definição de roteamento URL HTTP da aplicação demonstrativa de tarefas.
+/* RESPONSABILIDADE: Definição de roteamento URL HTTP da aplicação demonstrativa de tarefas.
 * */
 
 import type { Request, Response } from "express";

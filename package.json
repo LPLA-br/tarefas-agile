@@ -10,13 +10,14 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "build": "cd ./src/ && ./node_modules/typescript/bin/tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "cd ./src/ && npm exec tsc",
+    "test": "echo \"Testes não implementados\" && exit 1"
   },
   "dependencies": {
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
     "express": "^5.1.0",
+    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.26",
     "typescript": "^5.9.2"
   },

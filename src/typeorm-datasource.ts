@@ -6,7 +6,7 @@ import { DataSource } from "typeorm";
 import TratadorConfiguracoes from "./utilities/TratadorConfiguracoes.js";
 
 // ENTIDADES
-import Tarefa from "./entities/Tarefa.js";
+import { Tarefa } from "./entities/Tarefa.js";
 
 const conf = new TratadorConfiguracoes();
 
@@ -15,7 +15,7 @@ const TypeormDataSource = new DataSource(
     type: "better-sqlite3",
     database: conf.obterCaminhoDatabaseLocal(),
     logging: conf.obterEstadoDeLOGDatabaseLocal(),
-    entities: [],
+    entities: [Tarefa],
 
     synchronize: true, // true → false PRODUÇÃO
   }
@@ -30,4 +30,6 @@ catch ( err )
 {
   console.error( "TypeormDataSource: Erro durante inicialização → \n", err );
 }
+
+export { TypeormDataSource };
 
