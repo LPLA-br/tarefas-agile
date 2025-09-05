@@ -174,46 +174,57 @@ export class ControllerTarefas
   // Alterar para estado informado.
   private async alterarPrioridadeArmazenamento( identificador: number, estado: boolean ): Promise<void>
   {
-    const tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+    let tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
 
-    if ( tarefa === null )
-    {
-      throw new Error("obtenção de todos os dados de uma tarefa falhou.");
-    }
-
-    if ( tarefa?.prioritario === estado )
-    {
-      return;
-    }
+    if ( !this.saoValidosObjetoEEstadoDeTarefa( tarefa, estado ) ) return;
 
     if ( estado )
     {
       tarefa?.desdefinirPrioritario();
-      this.tarefaRepo.save( tarefa, {reload:false});
+      //@ts-ignore
+      this.tarefaRepo.save( tarefa );
       return;
     }
     tarefa?.definirPrioritario();
-    this.tarefaRepo.save( tarefa, {reload:false});
+    //@ts-ignore
+    this.tarefaRepo.save( tarefa );
   }
 
   private async alterarConclusaoArmazenamento( identificador: number, estado: boolean ): Promise<void>
   {
-    await this.tarefaRepo
-    .createQueryBuilder()
-    .update(Tarefa)
-    .set({concluido: estado})
-    .where("identificador = :identificador", {identificador: identificador})
-    .execute();
+    let tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+
+    if ( !this.saoValidosObjetoEEstadoDeTarefa( tarefa, estado ) ) return;
+
+    if ( estado )
+    {
+      tarefa?.concluirTarefa();
+      //@ts-ignore
+      this.tarefaRepo.save( tarefa );
+      return;
+    }
+    tarefa?.reverterConclusaoTarefa();
+    //@ts-ignore
+    this.tarefaRepo.save( tarefa );
   }
 
-  private async alterarTituloEOuCorpoTarefaArmazenamento( identificador: number, titulo: string, corpo: string ): Promise<void>
+  private async alterarTituloEOuCorpoTarefaArmazenamento( identificador: number, titulo?: string, corpo?: string ): Promise<void>
   {
-    await this.tarefaRepo
-    .createQueryBuilder()
-    .update(Tarefa)
-    .set({titulo: titulo, corpo: corpo})
-    .where("identificador = :identificador", {identificador: identificador})
-    .execute();
+    let tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+
+    if ( tarefa === null ) throw new Error("alteração de titulo e ou corpo de tarefa falhou por registro inexistente.");
+    
+    switch( true )
+    {
+      case (typeof titulo === "string"):
+        tarefa?.definirTitulo( titulo );
+      case (typeof corpo === "string"):
+        //@ts-ignore
+        tarefa?.definirCorpo( corpo );
+        break;
+    }
+
+    this.tarefaRepo.save( tarefa );
   }
 
   private async eliminarTarefaArmazenamento( identificador: number ): Promise<void>
@@ -253,6 +264,25 @@ export class ControllerTarefas
     .select("*")
     .from(Tarefa, "tarefa")
     .getMany();
+  }
+
+  //validações reutilizáveis
+
+  private saoValidosObjetoEEstadoDeTarefa( tarefa: Tarefa | null, estado: boolean ): boolean
+  {
+    if ( tarefa === null )
+    {
+      console.error( `${this.constructor.name}: obtenção de todos os dados de uma tarefa falhou.` );
+      return false;
+    }
+
+    if ( tarefa?.concluido === estado )
+    {
+      console.error( `${this.constructor.name}: alteracao de estado desnecessaria por valor desejado já atribuido.` );
+      return false;
+    }
+
+    return true;
   }
 
 }

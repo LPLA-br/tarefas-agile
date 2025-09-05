@@ -7,10 +7,10 @@ import { Router } from "express";
 import { ControllerTarefas } from "../controllers/ControllerTarefas.js";
 
 const RoutesTarefas = Router();
+const controller = new ControllerTarefas();
 
 RoutesTarefas.get( "/tarefas/titulos", (req: Request, res: Response) =>
 {
-  
 });
 
 
