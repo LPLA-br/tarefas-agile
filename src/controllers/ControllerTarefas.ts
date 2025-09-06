@@ -41,10 +41,13 @@ export class ControllerTarefas
     }
   }
 
-  public async modificarTarefa( identificador: number, tarefa: Partial<TypeTarefa> ): Promise<void>
+  public async modificarTextualTarefa( identificador: number | undefined, tarefa: Partial<TypeTarefa> ): Promise<void>
   {
     try
     {
+
+      if ( typeof identificador !== "number" ) throw new Error("identificador de Tarefa não numérico");
+
       if ( typeof tarefa.titulo === "string" && typeof tarefa.corpo === "string" )
       {
         await this.alterarTituloEOuCorpoTarefaArmazenamento( identificador, tarefa.titulo, tarefa.corpo );
@@ -130,6 +133,19 @@ export class ControllerTarefas
     }
   }
 
+  public async obterCampoEspecificoTodasTarefas( campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
+  {
+    try
+    {
+      return await this.obterCampoEspecificoTodasTarefas( campo );
+    }
+    catch ( err )
+    {
+      console.error( `${this.constructor.name}: ${err}` );
+      return null;
+    }
+  }
+
   public async obterTarefa( identificador: number ): Promise<Tarefa | null>
   {
     try
@@ -147,7 +163,7 @@ export class ControllerTarefas
   {
     try
     {
-      return await this.obterTodasTarefas();
+      return await this.obterTodosDadosTodasTarefasArmazenamento();
     }
     catch ( err )
     {
@@ -255,6 +271,15 @@ export class ControllerTarefas
     .from(Tarefa, "tarefa")
     .where("tarefa.identificador = :identificador", {identificador: identificador})
     .getOne();
+  }
+
+  private async obterCampoEspecificoTodasTarefasArmazenamento( campo: keyof TypeTarefa ): Promise< Tarefa[] | Tarefa | null >
+  {
+    return await this.tarefaRepo
+    .createQueryBuilder()
+    .select( campo )
+    .from(Tarefa, "tarefa")
+    .getMany();
   }
 
   private async obterTodosDadosTodasTarefasArmazenamento(): Promise<Tarefa[] | Tarefa | null>
