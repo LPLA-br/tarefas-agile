@@ -43,6 +43,9 @@
 
     // Emissões extra do typescript:
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+
+    //import do módulo typeorm
+    "importHelpers": false
   }
 }

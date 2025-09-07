@@ -7,7 +7,8 @@ import type { ConfigFile } from '../types/ConfigFile.js';
 
 export default class TratadorConfiguracoes
 {
-  private readonly CONF_FILE: string = "../server-config.json";
+  //NOTA: CONF_FILE relativo a quem o importa !
+  private readonly CONF_FILE: string = "./server-config.json";
   private configParams: ConfigFile;
 
   constructor()

@@ -1,5 +1,5 @@
 {
   "TCPport": 8080,
-  "databasePATH": "../database/tarefa-data.db",
+  "databasePATH": "../tarefa-data.db",
   "databseLOG": true
 }

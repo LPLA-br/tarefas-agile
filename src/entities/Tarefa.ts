@@ -33,8 +33,22 @@ export class Tarefa
   @Column({type: "varchar", length: 2048})
   public corpo: string;
 
-  constructor( tarefa: TypeTarefa )
+  constructor( tarefa?: TypeTarefa )
   {
+    /*TypeORM: argumentos de construtor devem ser opcionais pois
+    * typeorm, ao criar instâncias, não liga para argumentos de construtor.*/
+    if ( typeof tarefa !== "object" )
+    {
+      this.identificador = -1;
+      this.timestampCriacao = new Date().getTime().toString();
+      this.timestampUltimaModificacao = new Date().getTime().toString();
+      this.prioritario = false;
+      this.concluido = false;
+      this.titulo = "";
+      this.corpo = "";
+      return;
+    }
+
     this.identificador = tarefa.identificador ;
 
     this.timestampCriacao = ( tarefa.timestampCriacao !== undefined ) ? tarefa.timestampCriacao : this.gerarTimestampDeCriacao();

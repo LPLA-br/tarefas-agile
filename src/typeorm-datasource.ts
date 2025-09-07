@@ -16,7 +16,7 @@ const TypeormDataSource = new DataSource(
     database: conf.obterCaminhoDatabaseLocal(),
     logging: conf.obterEstadoDeLOGDatabaseLocal(),
     entities: [Tarefa],
-
+    migrations: [],
     synchronize: true, // true → false PRODUÇÃO
   }
 );

@@ -88,10 +88,12 @@ export class ControllerTarefas
     }
   }
 
-  public async eliminarTarefa( identificador: number ): Promise<void>
+  public async eliminarTarefa( identificador: number | undefined ): Promise<void>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       await this.eliminarTarefaArmazenamento( identificador );
     }
     catch (err)
