@@ -60,10 +60,12 @@ export class ControllerTarefas
     }
   }
 
-  public async priorizarTarefa( identificador: number ): Promise<void>
+  public async priorizarTarefa( identificador: number | undefined ): Promise<void>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       await this.alterarPrioridadeArmazenamento( identificador, true );
     }
     catch (err)
@@ -72,10 +74,12 @@ export class ControllerTarefas
     }
   }
 
-  public async despriorizarTarefa( identificador: number ): Promise<void>
+  public async despriorizarTarefa( identificador: number | undefined ): Promise<void>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       await this.alterarPrioridadeArmazenamento( identificador, false );
     }
     catch (err)
@@ -96,10 +100,12 @@ export class ControllerTarefas
     }
   }
 
-  public async concluirTarefa( identificador: number ): Promise<void>
+  public async concluirTarefa( identificador: number | undefined ): Promise<void>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       await this.alterarConclusaoArmazenamento( identificador, true );
     }
     catch (err)
@@ -108,10 +114,12 @@ export class ControllerTarefas
     }
   }
 
-  public async desconcluirTarefa( identificador: number ): Promise<void>
+  public async desconcluirTarefa( identificador: number | undefined ): Promise<void>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       await this.alterarConclusaoArmazenamento( identificador, false );
     }
     catch (err)
@@ -120,10 +128,12 @@ export class ControllerTarefas
     }
   }
 
-  public async obterCampoEspecificoUmaTarefa( identificador: number, campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
+  public async obterCampoEspecificoUmaTarefa( identificador: number | undefined, campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       return await this.obterCampoEspecificoDumaTarefaArmazenamento( identificador, campo );
     }
     catch ( err )
@@ -146,10 +156,12 @@ export class ControllerTarefas
     }
   }
 
-  public async obterTarefa( identificador: number ): Promise<Tarefa | null>
+  public async obterTarefa( identificador: number | undefined ): Promise<Tarefa | null>
   {
     try
     {
+      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
+
       return await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
     }
     catch ( err )
@@ -196,12 +208,12 @@ export class ControllerTarefas
 
     if ( estado )
     {
-      tarefa?.desdefinirPrioritario();
+      tarefa?.definirPrioritario();
       //@ts-ignore
       this.tarefaRepo.save( tarefa );
       return;
     }
-    tarefa?.definirPrioritario();
+    tarefa?.desdefinirPrioritario();
     //@ts-ignore
     this.tarefaRepo.save( tarefa );
   }

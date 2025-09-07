@@ -27,32 +27,25 @@ export const TarefaSchema: Schema =
 
 export const TarefaPutSchema: Schema = Object.assign( TarefaSchema, 
 {
-  identificador:
-  {
-    in: ['body'],
-    isNumeric: true,
-    notEmpty:
-    {
-      errorMessage: "identificador é necessário para saber qual tarefa deve ser alterada"
-    }
-  },
   prioritario:
   {
+    optional: true,
     in: ['body'],
     isBoolean: true,
-    notEmpty:
+    /*notEmpty:
     {
       errorMessage: "prioritario é necessário para avaliação de modificação no servidor"
-    }
+    }*/
   },
   concluido:
   {
+    optional: true,
     in: ['body'],
     isBoolean: true,
-    notEmpty:
+    /*notEmpty:
     {
       errorMessage: "concluido é necessário para avaliação de modificação no servidor"
-    }
+    }*/
   },
 });
 

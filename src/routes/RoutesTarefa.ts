@@ -4,7 +4,7 @@
 import type { Request, Response } from "express";
 import { Router } from "express";
 
-import { body, validationResult, checkSchema } from "express-validator";
+import { param, body, validationResult, checkSchema } from "express-validator";
 import { TarefaSchema, TarefaPutSchema } from "../types/TarefaSchema.js";
 
 import type { TypeTarefa } from "../types/TypeTarefa.js";
@@ -76,7 +76,7 @@ RoutesTarefas.get( "/tarefas/:identificador", body("identificador").notEmpty().i
   })();
 });
 
-RoutesTarefas.post( "/tarefas", checkSchema( TarefaSchema ), (req: Request, res: Response) =>
+RoutesTarefas.post( "/tarefas", checkSchema( TarefaSchema, ["body"]), (req: Request, res: Response) =>
 {
   const validation = validationResult( req );
 
@@ -112,7 +112,7 @@ RoutesTarefas.post( "/tarefas", checkSchema( TarefaSchema ), (req: Request, res:
 
 });
 
-RoutesTarefas.put( "/tarefas/:identificador", checkSchema(TarefaPutSchema),(req: Request, res: Response) =>
+RoutesTarefas.put( "/tarefas/:identificador", param("identificador").notEmpty().isNumeric(), checkSchema(TarefaPutSchema, ["body"]),(req: Request, res: Response) =>
 {
   const validation = validationResult( req );
 
@@ -122,24 +122,38 @@ RoutesTarefas.put( "/tarefas/:identificador", checkSchema(TarefaPutSchema),(req:
     {
       try
       {
-        const conteudo: Partial<TypeTarefa> = {
+        const obrigatorias: Partial<TypeTarefa> = {
+          identificador: +req.params.identificador,
           titulo: req.body.titulo,
           corpo: req.body.corpo
         };
 
-        const propriedades: Partial<TypeTarefa> =
+        const opcionais: Partial<TypeTarefa> =
         {
-          identificador: req.body.identificador,
           prioritario: req.body.prioritario,
           concluido: req.body.concluido,
         };
 
-        controller.modificarTextualTarefa( propriedades.identificador, conteudo );
+        controller.modificarTextualTarefa( obrigatorias.identificador, obrigatorias );
 
+        //Warning: two distinct methods converging to one logic based on one boolean.
+        if ( typeof opcionais.concluido === "string" )
+        {
+          controller.concluirTarefa( obrigatorias.identificador );
+          controller.desconcluirTarefa( obrigatorias.identificador );
+          return;
+        }
+        else if ( typeof opcionais.prioritario === "string" )
+        {
+          controller.priorizarTarefa( obrigatorias.identificador );
+          controller.despriorizarTarefa( obrigatorias.identificador );
+          return;
+        }
+        res.status(200).json( responderUniformementeAoFrontend( 200, controller.obterTarefa( obrigatorias.identificador ), "recurso modificado" ) );
       }
       catch ( err )
       {
-
+        res.status(500).json( responderUniformementeAoFrontend( 500, [], "servidor não conseguiu atualizar dados" ) );
       }
     }
  
