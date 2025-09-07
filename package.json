@@ -12,7 +12,7 @@
   "scripts": {
     "start": "cd ./build/ && node main.js",
     "build": "cd ./src/ && npm exec tsc && npm run config",
-    "test": "echo \"Testes não implementados\" && exit 1",
+    "test": "npm exec jest",
     "clear": "rm -rf ./build/*",
     "config": "cp ./src/server-config.json ./build/"
   },
@@ -20,6 +20,7 @@
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.0",
     "better-sqlite3": "^12.2.0",
+    "body-parser": "^2.2.0",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "http-status-codes": "^2.3.0",

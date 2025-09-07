@@ -1,11 +1,12 @@
 /* RESPONSABILIDADE: Definição de roteamento URL HTTP da aplicação demonstrativa de tarefas.
 * */
 
-import type { Request, Response } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { Router } from "express";
 import { StatusCodes } from "http-status-codes";
 
 import { param, body, validationResult, checkSchema } from "express-validator";
+import type { ValidationError } from "express-validator";
 import { TarefaSchema, TarefaPutSchema } from "../types/TarefaSchema.js";
 
 import type { TypeTarefa } from "../types/TypeTarefa.js";
@@ -15,110 +16,134 @@ import { ControllerTarefas } from "../controllers/ControllerTarefas.js";
 const RoutesTarefas = Router();
 const controller = new ControllerTarefas();
 
-function responderUniformementeAoFrontend( codigo: number, dados: any, mensagem: string )
+function responderUniformementeAoFrontend( codigo: number, dados: any, mensagem: string, erros: ValidationError[] )
 {
+  if ( erros.length !== 0 )
+  {
+    return {
+      "codigo": codigo,
+      "erros": erros,
+      "dados": dados
+    }
+  }
   return {
-    "codigo": codigo,
-    "mensagem": mensagem,
-    "dados": dados
+      "codigo": codigo,
+      "mensagem": mensagem,
+      "dados": dados
   }
 }
 
-RoutesTarefas.get( "/tarefas/titulos", body('campo').notEmpty().isString(), (req: Request, res: Response) =>
+RoutesTarefas.get( "/tarefas/titulos", (req: Request, res: Response) =>
 {
-  const validation = validationResult( req );
+  const errors = validationResult( req );
+
+  if ( !errors.isEmpty() )
+  {
+    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "",errors.array()) );
+    return;
+  }
 
   ( async ()=>
   {
-    if ( validation.isEmpty() )
+    try
     {
-      try
+      const dados =
       {
-        const dados =
-        {
-          "titulos": await controller.obterCampoEspecificoTodasTarefas( req.body.campo ),
-          "identificadoes": await controller.obterCampoEspecificoTodasTarefas( "identificador" )
-        }
+        "titulos": await controller.obterCampoEspecificoTodasTarefas( "titulo" ),
+        "identificadoes": await controller.obterCampoEspecificoTodasTarefas( "identificador" )
+      }
 
-        res.status(StatusCodes.OK).json( responderUniformementeAoFrontend( StatusCodes.OK, dados, "titulos e respectivos ids de todas tarefas") );
-        return;
-      }
-      catch ( err )
-      {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [], "servidor não conseguiu obter dados do recurso" ) );
-        return;
-      }
+      res.status(StatusCodes.OK).json( responderUniformementeAoFrontend( StatusCodes.OK, dados,
+                "titulos e respectivos ids de todas tarefas", errors.array()) );
+      return;
     }
-    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "requisição sem \"campo\" string válido") );
+    catch ( err )
+    {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(
+                responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [],
+                "servidor não conseguiu obter dados do recurso", errors.array()) );
+      return;
+    }
   })();
 });
 
 
 RoutesTarefas.get( "/tarefas/:identificador", body("identificador").notEmpty().isNumeric(), (req: Request, res: Response) =>
 {
-  const validation = validationResult( req );
+  const errors = validationResult( req );
+
+  if ( !errors.isEmpty() )
+  {
+    res.status(StatusCodes.BAD_REQUEST).json(
+              responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [],
+              "", errors.array()) );
+    return;
+  }
 
   ( async ()=>
   {
-    if ( validation.isEmpty() )
+    try
     {
-      try
+      const dados = await controller.obterTarefa( req.body.identificador );
+
+      //@ts-ignore
+      if ( typeof dados === "null" || typeof dados === "undefined" )
       {
-        const dados = await controller.obterTarefa( req.body.identificador );
-
-        //@ts-ignore
-        if ( typeof dados === "null" || typeof dados === "undefined" )
-        {
-          res.status(StatusCodes.NOT_FOUND).json( responderUniformementeAoFrontend( StatusCodes.NOT_FOUND, [], "recurso para deleção não existe." ) );
-          return;
-        }
-
-        res.status(StatusCodes.OK).json( responderUniformementeAoFrontend( StatusCodes.OK, dados, "dados de uma tarefa especifica") );
+        res.status(StatusCodes.NOT_FOUND).json( responderUniformementeAoFrontend( StatusCodes.NOT_FOUND, [],
+                                              "recurso para deleção não existe.", errors.array()) );
         return;
       }
-      catch ( err )
-      {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [], "servidor não conseguiu obter dados do recurso" ) );
-        return;
-      }
+
+      res.status(StatusCodes.OK).json(
+        responderUniformementeAoFrontend( StatusCodes.OK, dados, "dados de uma tarefa especifica",
+        errors.array()) );
+      return;
     }
-    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "requisição sem \"identificador\" numérico válido") );
+    catch ( err )
+    {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR,
+                                                        [], "servidor não conseguiu obter dados do recurso", errors.array()) );
+      return;
+    }
   })();
 });
 
 // Warning: HTTP url param not indicate resource
-RoutesTarefas.post( "/tarefas", checkSchema( TarefaSchema, ["body"]), (req: Request, res: Response) =>
+RoutesTarefas.post( "/tarefas", checkSchema( TarefaSchema ), (req: Request, res: Response) =>
 {
-  const validation = validationResult( req );
+  const errors = validationResult( req );
+
+  if ( !errors.isEmpty() )
+  {
+    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "",errors.array()) );
+    return;
+  }
 
   ( async ()=>
   {
-    if ( validation.isEmpty() )
+    try
     {
-      try
+      //TODO: Tarefa class responsibility to offer a default state for a new object.
+      const tarefa: TypeTarefa =
       {
-        //TODO: Tarefa class responsibility to offer a default state for a new object.
-        const tarefa: TypeTarefa =
-        {
-          identificador: -1,
-          prioritario: false,
-          concluido: false,
-          titulo: req.body.titulo,
-          corpo: req.body.corpo
-        };
+        identificador: -1,
+        prioritario: false,
+        concluido: false,
+        titulo: req.body.titulo,
+        corpo: req.body.corpo
+      };
 
-        const dados = await controller.criarTarefa( tarefa );
+      const dados = await controller.criarTarefa( tarefa );
 
-        res.status(StatusCodes.CREATED).json( responderUniformementeAoFrontend( StatusCodes.CREATED, dados, "tarefa criada") );
-        return;
-      }
-      catch ( err )
-      {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [], "servidor não conseguiu reter dados" ) );
-        return;
-      }
+      res.status(StatusCodes.CREATED).json( responderUniformementeAoFrontend( StatusCodes.CREATED, dados, "tarefa criada", errors.array()) );
+      return;
     }
-    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "requisição não possui campos (titulo,corpo) do tipo string") ); 
+    catch ( err )
+    {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [],
+                                                                                           "servidor não conseguiu reter dados", errors.array()) );
+      return;
+    }
   })();
 
 });
@@ -126,90 +151,100 @@ RoutesTarefas.post( "/tarefas", checkSchema( TarefaSchema, ["body"]), (req: Requ
 RoutesTarefas.put( "/tarefas/:identificador", param("identificador").notEmpty().isNumeric(),
                   checkSchema(TarefaPutSchema, ["body"]),(req: Request, res: Response) =>
 {
-  const validation = validationResult( req );
+  const errors = validationResult( req );
+
+  if ( !errors.isEmpty() )
+  {
+    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "",errors.array()) );
+    return;
+  }
 
   ( async ()=>
   {
-    if ( validation.isEmpty() )
+    try
     {
-      try
-      {
-        const obrigatorias: Partial<TypeTarefa> = {
-          //@ts-ignore
-          identificador: +req.params.identificador,
-          titulo: req.body.titulo,
-          corpo: req.body.corpo
-        };
-
-        const opcionais: Partial<TypeTarefa> =
-        {
-          prioritario: req.body.prioritario,
-          concluido: req.body.concluido,
-        };
-
+      const obrigatorias: Partial<TypeTarefa> = {
         //@ts-ignore
-        if ( controller.obterCampoEspecificoUmaTarefa( obrigatorias.identificador, "identificador" ) === null )
-        {
-          res.status(StatusCodes.NOT_FOUND).json( responderUniformementeAoFrontend( StatusCodes.NOT_FOUND, [], "recurso para deleção não existe." ) );
-          return;
-        }
+        identificador: +req.params.identificador,
+        titulo: req.body.titulo,
+        corpo: req.body.corpo
+      };
 
-        controller.modificarTextualTarefa( obrigatorias.identificador, obrigatorias );
-
-        //Warning: two distinct methods converging to one logic based on one boolean.
-        if ( typeof opcionais.concluido === "string" )
-        {
-          controller.concluirTarefa( obrigatorias.identificador );
-          controller.desconcluirTarefa( obrigatorias.identificador );
-          return;
-        }
-        else if ( typeof opcionais.prioritario === "string" )
-        {
-          controller.priorizarTarefa( obrigatorias.identificador );
-          controller.despriorizarTarefa( obrigatorias.identificador );
-          return;
-        }
-        res.status(StatusCodes.OK).json( responderUniformementeAoFrontend( StatusCodes.OK, controller.obterTarefa( obrigatorias.identificador ), "recurso modificado" ) );
-        return;
-      }
-      catch ( err )
+      const opcionais: Partial<TypeTarefa> =
       {
-        res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [], "servidor não conseguiu atualizar dados" ) );
+        prioritario: req.body.prioritario,
+        concluido: req.body.concluido,
+      };
+
+      //@ts-ignore
+      if ( controller.obterCampoEspecificoUmaTarefa( obrigatorias.identificador, "identificador" ) === null )
+      {
+        res.status(StatusCodes.NOT_FOUND).json( responderUniformementeAoFrontend( StatusCodes.NOT_FOUND, [],
+                                                                                "recurso para deleção não existe.", errors.array()) );
         return;
       }
+
+      controller.modificarTextualTarefa( obrigatorias.identificador, obrigatorias );
+
+      //Warning: two distinct methods converging to one logic based on one boolean.
+      if ( typeof opcionais.concluido === "string" )
+      {
+        controller.concluirTarefa( obrigatorias.identificador );
+        controller.desconcluirTarefa( obrigatorias.identificador );
+        return;
+      }
+      else if ( typeof opcionais.prioritario === "string" )
+      {
+        controller.priorizarTarefa( obrigatorias.identificador );
+        controller.despriorizarTarefa( obrigatorias.identificador );
+        return;
+      }
+      res.status(StatusCodes.OK).json( responderUniformementeAoFrontend( StatusCodes.OK, controller.obterTarefa( obrigatorias.identificador ),
+                                                                        "recurso modificado", errors.array()) );
+      return;
     }
-    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "requisição não possui campos (titulo,corpo) do tipo string") );
+    catch ( err )
+    {
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [],
+                                                                                           "servidor não conseguiu atualizar dados", errors.array()) );
+      return;
+    }
   })();
 });
 
 RoutesTarefas.delete( "/tarefas/:identificador", param("identificador").notEmpty().isNumeric(), (req: Request, res: Response) =>
 {
-  const validation = validationResult( req );
+  const errors = validationResult( req );
 
-  if ( validation.isEmpty() )
+  if ( !errors.isEmpty() )
+  {
+    res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "", errors.array()) );
+    return;
+  }
+
+  (async ()=>
   {
     try
     {
       //@ts-ignore
       if ( controller.obterCampoEspecificoUmaTarefa( +req.params.identificador, "identificador" ) === null )
       {
-        res.status(StatusCodes.NOT_FOUND).json( responderUniformementeAoFrontend( StatusCodes.NOT_FOUND, [], "recurso para deleção não existe." ) );
+        res.status(StatusCodes.NOT_FOUND).json( responderUniformementeAoFrontend( StatusCodes.NOT_FOUND, [], "recurso para deleção não existe.", errors.array()) );
         return;
       }
 
       //@ts-ignore
       controller.eliminarTarefa( +req.params.identificador );
-      res.status(StatusCodes.NO_CONTENT).json( responderUniformementeAoFrontend( StatusCodes.NO_CONTENT, [], "recurso foi eliminado." ) );
+      res.status(StatusCodes.NO_CONTENT).json( responderUniformementeAoFrontend( StatusCodes.NO_CONTENT, [], "recurso foi eliminado.", errors.array() ) );
       return;
     }
     catch (err)
     {
-      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [], "servidor não conseguiu eliminar tarefa" ) );
+      res.status(StatusCodes.INTERNAL_SERVER_ERROR).json( responderUniformementeAoFrontend( StatusCodes.INTERNAL_SERVER_ERROR, [], "servidor não conseguiu eliminar tarefa",
+                                                                                           errors.array()) );
       return;
     }
-  }
-  res.status(StatusCodes.BAD_REQUEST).json( responderUniformementeAoFrontend( StatusCodes.BAD_REQUEST, [], "requisição não possui campo identificador para deleção") );
-  return;
+  })();
 });
 
 

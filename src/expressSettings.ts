@@ -2,16 +2,18 @@
 * */
 
 import express from 'express';
-import { notFound } from './routes/NotFound.js';
+//import { notFound } from './routes/NotFound.js';
 import { RoutesTarefas } from './routes/RoutesTarefa.js';
+import bodyParser from 'body-parser';
+
 
 const app = express();
 
-app.use( notFound );
+//app.use( notFound );
+//
+app.use( bodyParser.json() );
+app.use( bodyParser.urlencoded({ extended: true }) );
 
 app.use('/', RoutesTarefas );
-
-app.use( express.json() );
-app.use( express.urlencoded({ extended: true }) );
 
 export { app };

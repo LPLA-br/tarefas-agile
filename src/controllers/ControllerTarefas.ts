@@ -25,6 +25,7 @@ export class ControllerTarefas
       const instancia = new Tarefa(
       {
         identificador: -1,
+
         timestampCriacao: timestampCriacao,
         timestampUltimaModificacao: timestampModific,
         prioritario: tarefa.prioritario,
@@ -33,11 +34,11 @@ export class ControllerTarefas
         corpo: tarefa.corpo
       });
 
-      await this.salvarNovaTarefaArmazenamento( instancia );
+      await this.tarefaRepo.save(instancia);
     }
     catch (err)
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -56,7 +57,7 @@ export class ControllerTarefas
     }
     catch (err)
     {
-      console.error(  `${this.constructor.name}: ${err}`  );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -70,7 +71,7 @@ export class ControllerTarefas
     }
     catch (err)
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -84,7 +85,7 @@ export class ControllerTarefas
     }
     catch (err)
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -98,7 +99,7 @@ export class ControllerTarefas
     }
     catch (err)
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -112,7 +113,7 @@ export class ControllerTarefas
     }
     catch (err)
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -126,7 +127,7 @@ export class ControllerTarefas
     }
     catch (err)
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
     }
   }
 
@@ -140,7 +141,7 @@ export class ControllerTarefas
     }
     catch ( err )
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
       return null;
     }
   }
@@ -149,11 +150,11 @@ export class ControllerTarefas
   {
     try
     {
-      return await this.obterCampoEspecificoTodasTarefas( campo );
+      return await this.obterCampoEspecificoTodasTarefasArmazenamento( campo );
     }
     catch ( err )
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
       return null;
     }
   }
@@ -168,7 +169,7 @@ export class ControllerTarefas
     }
     catch ( err )
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
       return null;
     }
   }
@@ -181,7 +182,7 @@ export class ControllerTarefas
     }
     catch ( err )
     {
-      console.error( `${this.constructor.name}: ${err}` );
+      this.emitirErroPadronizado( err );
       return null;
     }
     
@@ -322,6 +323,18 @@ export class ControllerTarefas
     }
 
     return true;
+  }
+
+  // Warning: Single responsibility violation (maintain)
+
+  private emitirErroPadronizado( err: any, mensagemProgramador?: string ): void
+  {
+    if ( err instanceof Error )
+    {
+      console.error( `CLASSE: ${this.constructor.name}:\n ${err.message} \n ${err.stack}\n ${mensagemProgramador && ""}` );
+      return;
+    }
+    console.error(err);
   }
 
 }

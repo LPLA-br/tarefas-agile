@@ -13,7 +13,7 @@ export class Tarefa
 {
 
   @PrimaryGeneratedColumn()
-  public identificador: number;
+  public identificador!: number;
 
   @Column({type: "varchar", length: 13})
   public timestampCriacao: string;
@@ -39,7 +39,6 @@ export class Tarefa
     * typeorm, ao criar instâncias, não liga para argumentos de construtor.*/
     if ( typeof tarefa !== "object" )
     {
-      this.identificador = -1;
       this.timestampCriacao = new Date().getTime().toString();
       this.timestampUltimaModificacao = new Date().getTime().toString();
       this.prioritario = false;
@@ -49,11 +48,9 @@ export class Tarefa
       return;
     }
 
-    this.identificador = tarefa.identificador ;
-
     this.timestampCriacao = ( tarefa.timestampCriacao !== undefined ) ? tarefa.timestampCriacao : this.gerarTimestampDeCriacao();
     this.timestampUltimaModificacao = ( tarefa.timestampUltimaModificacao !== undefined ) ? tarefa.timestampUltimaModificacao : this.atualizarTimestampDeModificacao();
-
+  
     this.prioritario = tarefa.prioritario;
     this.concluido = tarefa.concluido;
 
