@@ -42,7 +42,7 @@ export class ControllerTarefas
     }
   }
 
-  public async modificarTextualTarefa( identificador: number | undefined, tarefa: Pick<Tarefa, "titulo" | "corpo"> ): Promise<void>
+  public async modificarTextualTarefa( identificador: number | undefined, tarefa: Pick<Tarefa, "titulo" | "corpo"> ): Promise<number>
   {
     try
     {
@@ -51,7 +51,7 @@ export class ControllerTarefas
       if ( typeof tarefa.titulo === "string" && typeof tarefa.corpo === "string" )
       {
         await this.alterarTituloEOuCorpoTarefaArmazenamento( identificador, tarefa.titulo, tarefa.corpo );
-        return;
+        return 0;
       }
 
       throw new Error( `modificarTarefa esperava titulo, recebeu ${tarefa.titulo} e esperava corpo, recebeu ${tarefa.corpo}.` );
@@ -59,34 +59,39 @@ export class ControllerTarefas
     catch (err)
     {
       this.emitirErroPadronizado( err );
+      return -1;
     }
   }
 
-  public async priorizarTarefa( identificador: number | undefined ): Promise<void>
+  public async alterarPrioridadeTarefaPara( estado: boolean , identificador: number | undefined ): Promise<number>
   {
     try
     {
       if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
 
-      await this.alterarPrioridadeArmazenamento( identificador, true );
+      await this.alterarPrioridadeArmazenamento( identificador, estado );
+      return 0;
     }
     catch (err)
     {
       this.emitirErroPadronizado( err );
+      return -1;
     }
   }
 
-  public async despriorizarTarefa( identificador: number | undefined ): Promise<void>
+  public async alterarEstadoConclusaoTarefaPara( estado: boolean ,identificador: number | undefined ): Promise<number>
   {
     try
     {
       if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
 
-      await this.alterarPrioridadeArmazenamento( identificador, false );
+      await this.alterarConclusaoArmazenamento( identificador, estado );
+      return 0;
     }
     catch (err)
     {
       this.emitirErroPadronizado( err );
+      return -1;
     }
   }
 
@@ -97,34 +102,6 @@ export class ControllerTarefas
       if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
 
       await this.eliminarTarefaArmazenamento( identificador );
-    }
-    catch (err)
-    {
-      this.emitirErroPadronizado( err );
-    }
-  }
-
-  public async concluirTarefa( identificador: number | undefined ): Promise<void>
-  {
-    try
-    {
-      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
-
-      await this.alterarConclusaoArmazenamento( identificador, true );
-    }
-    catch (err)
-    {
-      this.emitirErroPadronizado( err );
-    }
-  }
-
-  public async desconcluirTarefa( identificador: number | undefined ): Promise<void>
-  {
-    try
-    {
-      if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
-
-      await this.alterarConclusaoArmazenamento( identificador, false );
     }
     catch (err)
     {
@@ -197,37 +174,33 @@ export class ControllerTarefas
   // Alterar para estado informado.
   private async alterarPrioridadeArmazenamento( identificador: number, estado: boolean ): Promise<void>
   {
-    let tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+    let tarefa: Tarefa | null = await this.obterTarefa( identificador );
 
-    if ( !this.saoValidosObjetoEEstadoDeTarefa( tarefa, estado ) ) return;
+    if ( tarefa === null ) throw new Error( "Tarefa inexistente." );
 
     if ( estado )
     {
-      tarefa?.definirPrioritario();
-      //@ts-ignore
+      tarefa.definirPrioritario();
       await this.tarefaRepo.save( tarefa );
       return;
     }
-    tarefa?.desdefinirPrioritario();
-    //@ts-ignore
+    tarefa.desdefinirPrioritario();
     await this.tarefaRepo.save( tarefa );
   }
 
   private async alterarConclusaoArmazenamento( identificador: number, estado: boolean ): Promise<void>
   {
-    let tarefa: Tarefa | null = await this.obterTodosDadosDumaTarefaArmazenamento( identificador );
+    let tarefa: Tarefa | null = await this.obterTarefa( identificador );
 
-    if ( !this.saoValidosObjetoEEstadoDeTarefa( tarefa, estado ) ) return;
+    if ( tarefa === null ) throw new Error( "Tarefa inexistente." );
 
     if ( estado )
     {
-      tarefa?.concluirTarefa();
-      //@ts-ignore
+      tarefa.concluirTarefa();
       await this.tarefaRepo.save( tarefa );
       return;
     }
-    tarefa?.reverterConclusaoTarefa();
-    //@ts-ignore
+    tarefa.reverterConclusaoTarefa();
     await this.tarefaRepo.save( tarefa );
   }
 
@@ -240,10 +213,10 @@ export class ControllerTarefas
     switch( true )
     {
       case (typeof titulo === "string"):
-        tarefa?.definirTitulo( titulo );
+        tarefa.definirTitulo( titulo );
       case (typeof corpo === "string"):
         //@ts-ignore
-        tarefa?.definirCorpo( corpo );
+        tarefa.definirCorpo( corpo );
         break;
     }
 
@@ -308,25 +281,6 @@ export class ControllerTarefas
     .select("*")
     .from(Tarefa, "tarefa")
     .getMany();
-  }
-
-  //validações reutilizáveis
-
-  private saoValidosObjetoEEstadoDeTarefa( tarefa: Tarefa | null, estado: boolean ): boolean
-  {
-    if ( tarefa === null )
-    {
-      console.error( `${this.constructor.name}: obtenção de todos os dados de uma tarefa falhou.` );
-      return false;
-    }
-
-    if ( tarefa?.concluido === estado )
-    {
-      console.error( `${this.constructor.name}: alteracao de estado desnecessaria por valor desejado já atribuido.` );
-      return false;
-    }
-
-    return true;
   }
 
   // Warning: Single responsibility violation (maintain)
