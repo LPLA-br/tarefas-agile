@@ -25,7 +25,32 @@ export const TarefaSchema: Schema =
   },
 };
 
-export const TarefaPutSchema: Schema = Object.assign( TarefaSchema, 
+export const OptionalTarefaSchema: Schema =
+{
+  titulo:
+  {
+    optional: true,
+    in: ['body'],
+    isString: true,
+    notEmpty:
+    {
+      errorMessage: "título é necessário"
+    }
+  },
+  corpo:
+  {
+    optional: true,
+    in: ['body'],
+    isString: true,
+    notEmpty:
+    {
+      errorMessage: "corpo é necessário"
+    }
+  },
+};
+
+// Superconjunto de OptionalTarefaSchema
+export const TarefaEstadosSchema: Schema = Object.assign(
 {
   prioritario:
   {
@@ -47,5 +72,5 @@ export const TarefaPutSchema: Schema = Object.assign( TarefaSchema,
       errorMessage: "concluido é necessário para avaliação de modificação no servidor"
     }*/
   },
-});
+}, OptionalTarefaSchema);
 

@@ -42,18 +42,19 @@ export class ControllerTarefas
     }
   }
 
-  public async modificarTextualTarefa( identificador: number | undefined, tarefa: Partial<TypeTarefa> ): Promise<void>
+  public async modificarTextualTarefa( identificador: number | undefined, tarefa: Pick<Tarefa, "titulo" | "corpo"> ): Promise<void>
   {
     try
     {
-
       if ( typeof identificador !== "number" ) throw new Error("identificador de Tarefa não numérico");
 
       if ( typeof tarefa.titulo === "string" && typeof tarefa.corpo === "string" )
       {
         await this.alterarTituloEOuCorpoTarefaArmazenamento( identificador, tarefa.titulo, tarefa.corpo );
+        return;
       }
-      throw new Error( `modificarTarefa → titulo, corpo inválidos.` );
+
+      throw new Error( `modificarTarefa esperava titulo, recebeu ${tarefa.titulo} e esperava corpo, recebeu ${tarefa.corpo}.` );
     }
     catch (err)
     {
@@ -131,13 +132,13 @@ export class ControllerTarefas
     }
   }
 
-  public async obterCampoEspecificoUmaTarefa( identificador: number | undefined, campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
+  public async obterTituloIdentificadorUmaTarefa( identificador: number | undefined ): Promise< Pick<Tarefa, "identificador" | "titulo" > | null>
   {
     try
     {
       if ( !(typeof identificador === "number" ) ) throw new Error( `${this.constructor.name}: identificador indefinido` ); 
 
-      return await this.obterCampoEspecificoDumaTarefaArmazenamento( identificador, campo );
+      return await this.obterParTituloIdentificadorTarefaArmazenamento( identificador );
     }
     catch ( err )
     {
@@ -146,11 +147,12 @@ export class ControllerTarefas
     }
   }
 
-  public async obterCampoEspecificoTodasTarefas( campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
+  public async obterTituloIdentificadorTodasTarefas():
+    Promise< Pick<Tarefa, "identificador" | "titulo" >[] | Pick<Tarefa, "identificador" | "titulo" > | null>
   {
     try
     {
-      return await this.obterCampoEspecificoTodasTarefasArmazenamento( campo );
+      return await this.obterParesTitulosIdentificadoresTarefasArmazenamento();
     }
     catch ( err )
     {
@@ -192,16 +194,6 @@ export class ControllerTarefas
   // Warning: Possible Single Reponsibility Issue
   // Warning: Possible Anemic Classes With Unrestricted Data Manipulation
 
-  private async salvarNovaTarefaArmazenamento( instancia: Tarefa ): Promise<void>
-  {
-    await this.tarefaRepo
-    .createQueryBuilder()
-    .insert()
-    .into(Tarefa)
-    .values(instancia)
-    .execute();
-  }
-
   // Alterar para estado informado.
   private async alterarPrioridadeArmazenamento( identificador: number, estado: boolean ): Promise<void>
   {
@@ -213,12 +205,12 @@ export class ControllerTarefas
     {
       tarefa?.definirPrioritario();
       //@ts-ignore
-      this.tarefaRepo.save( tarefa );
+      await this.tarefaRepo.save( tarefa );
       return;
     }
     tarefa?.desdefinirPrioritario();
     //@ts-ignore
-    this.tarefaRepo.save( tarefa );
+    await this.tarefaRepo.save( tarefa );
   }
 
   private async alterarConclusaoArmazenamento( identificador: number, estado: boolean ): Promise<void>
@@ -231,12 +223,12 @@ export class ControllerTarefas
     {
       tarefa?.concluirTarefa();
       //@ts-ignore
-      this.tarefaRepo.save( tarefa );
+      await this.tarefaRepo.save( tarefa );
       return;
     }
     tarefa?.reverterConclusaoTarefa();
     //@ts-ignore
-    this.tarefaRepo.save( tarefa );
+    await this.tarefaRepo.save( tarefa );
   }
 
   private async alterarTituloEOuCorpoTarefaArmazenamento( identificador: number, titulo?: string, corpo?: string ): Promise<void>
@@ -255,51 +247,63 @@ export class ControllerTarefas
         break;
     }
 
-    this.tarefaRepo.save( tarefa );
+    await this.tarefaRepo.save( tarefa );
   }
 
   private async eliminarTarefaArmazenamento( identificador: number ): Promise<void>
   {
-    await this.tarefaRepo
-    .createQueryBuilder()
-    .delete()
-    .from(Tarefa)
-    .where("identificador = :identificador", { identificador: identificador })
-    .execute();
+    await this.tarefaRepo.delete({identificador: identificador})
   }
 
   private async obterTodosDadosDumaTarefaArmazenamento( identificador: number ): Promise< Tarefa | null>
   {
-    return await this.tarefaRepo
-    .createQueryBuilder()
-    .select("*")
-    .from(Tarefa, "tarefa")
-    .where("tarefa.identificador = :identificador", {identificador: identificador})
-    .getOne();
+    return await this.tarefaRepo.findOneBy({identificador: identificador});
   }
 
-  private async obterCampoEspecificoDumaTarefaArmazenamento( identificador: number, campo: keyof TypeTarefa ): Promise<Tarefa[] | Tarefa | null>
+  private async obterParTituloIdentificadorTarefaArmazenamento( identificador: number ): Promise< Pick<Tarefa, "identificador" | "titulo"> | null >
   {
-    return await this.tarefaRepo
-    .createQueryBuilder()
-    .select( campo )
-    .from(Tarefa, "tarefa")
-    .where("tarefa.identificador = :identificador", {identificador: identificador})
-    .getOne();
+    const tarefa: Tarefa | null = await this.tarefaRepo.findOneBy({ identificador: identificador });
+
+    if ( tarefa !== null )
+    {
+      const objeto: Pick< Tarefa, "identificador" | "titulo" > | null =
+      { identificador: tarefa.identificador, titulo: tarefa.titulo };
+
+      return objeto;
+    }
+    return null;
   }
 
-  private async obterCampoEspecificoTodasTarefasArmazenamento( campo: keyof TypeTarefa ): Promise< Tarefa[] | Tarefa | null >
+  private async obterParesTitulosIdentificadoresTarefasArmazenamento():
+    Promise< Pick<Tarefa, "identificador" | "titulo">[] | Promise< Pick<Tarefa, "identificador" | "titulo"> > | null >
   {
-    return await this.tarefaRepo
-    .createQueryBuilder()
-    .select( campo )
-    .from(Tarefa, "tarefa")
-    .getMany();
+    const objetos: Pick<Tarefa, "identificador" | "titulo">[] | Pick<Tarefa, "identificador" | "titulo"> | null
+    = await this.tarefaRepo.find();
+
+    if ( Array.isArray( objetos ) )
+    {
+      let subPartesTarefasLista: Pick<Tarefa, "identificador" | "titulo">[] = [];
+
+      for ( let i = 0; i < objetos.length; i++ )
+      {
+        //@ts-ignore
+        subPartesTarefasLista.push( { identificador: objetos[i]["identificador"] , titulo: objetos[i]["titulo"] } );
+      }
+
+      return subPartesTarefasLista;
+    }
+    else if ( objetos !== null )
+    {
+      let subParteTarefa: Pick<Tarefa, "identificador" | "titulo"> = objetos;
+      return subParteTarefa;
+    }
+    
+    return null;
   }
 
   private async obterTodosDadosTodasTarefasArmazenamento(): Promise<Tarefa[] | Tarefa | null>
   {
-    return this.tarefaRepo
+    return await this.tarefaRepo
     .createQueryBuilder()
     .select("*")
     .from(Tarefa, "tarefa")

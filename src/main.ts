@@ -24,7 +24,8 @@ try
   const porta = new TratadorConfiguracoes().obterPortaTCP();
   app.listen( porta, ()=>
   {
-    console.log(`TAREFAS - OUVINDO PORTA: ${porta}`); });
+    console.log(`TAREFAS - OUVINDO PORTA: ${porta}\n\n`);
+  });
 }
 catch( err )
 {
