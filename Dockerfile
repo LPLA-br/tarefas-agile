@@ -2,13 +2,14 @@
 
 FROM node:latest
 
-WORKDIR /usr/src/nome-aplicacao
+WORKDIR /usr/src/tarefas
 
 COPY . .
 
 RUN npm install
+RUN npm run build
 
 EXPOSE 8080
 
-ENTRYPOINT npm start
+ENTRYPOINT npm run start
 

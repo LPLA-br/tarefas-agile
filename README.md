@@ -15,4 +15,23 @@ CHANGELOG:
 - manipulacao lógica de estados de tarefa (concluido, prioritario).
 - remoção arbitrária de tarefas se assim for desejado.
     
+## COMO RODAR ISSO COM O DOCKER ?
+
+Siga as etapas abaixo para sistema
+linux como software de conteiner Docker:
+
+```shellscript
+
+# obtenha a imagem do node do dockerhub
+$ docker pull node
+
+# crie uma nova imagem extendendo as camadas da
+# imagen node obtida. Neste caso node/tarefas:0.X.X
+$ docker build -t 'node/tarefas:VERSAO' .
+
+# Por fim, instâncie a imagem em um container associando
+# a porta tcp 8080 do container com a 8080 da tua máquina.
+$ docker run --publish 8080:8080/tcp
+
+```
 

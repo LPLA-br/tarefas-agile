@@ -1,6 +1,6 @@
 {
   "name": "lpla-tarefas-b",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "\"servidor backend de tarefas\"",
   "keywords": [
     "tarefas"
@@ -10,10 +10,12 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "initdevenv":"npm install",
     "start": "cd ./build/ && node main.js",
     "build": "cd ./src/ && npm exec tsc && npm run config",
+    "prod":"",
     "test": "npm exec jest",
-    "clear": "rm -rf ./build/*",
+    "clearbuild": "rm -rf ./build/*",
     "config": "cp ./src/server-config.json ./build/"
   },
   "dependencies": {
