@@ -31,7 +31,7 @@ $ docker build -t 'node/tarefas:VERSAO' .
 
 # Por fim, instâncie a imagem em um container associando
 # a porta tcp 8080 do container com a 8080 da tua máquina.
-$ docker run --publish 8080:8080/tcp
+$ docker run --publish 8080:8080/tcp node/tarefas:0.X.X
 
 ```
 
